@@ -1,0 +1,93 @@
+version: '3'
+
+volumes:
+  local_postgres_data: {}
+  local_postgres_data_backups: {}
+
+services:
+  owncloud:
+    build:
+      context: ./
+      dockerfile: ./compose/production/owncloud/Dockerfile
+    restart: always
+    container_name: sbooks-owncloud
+    ports:
+      - 9898:80
+    volumes:
+      - ./owncloud/files:/var/www/html/data # ánh xạ thư mục /home/ownclode-files vào container
+    networks:
+      - owncloud-network
+
+  mysql:
+    build:
+      context: ./
+      dockerfile: ./compose/production/mysql/Dockerfile
+    restart: always
+    container_name: sbooks-mysql-owncloud
+    env_file:
+      - ./.envs/.production/.mysql      # password root, thay bằng pass tự đặt
+    networks:
+      - owncloud-network
+    volumes:
+      - ./owncloud/db:/var/lib/mysql  # ánh xạ thư mục /home/ownclode-db vào container
+
+  django: &django
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    image: sbooks_be_local_django
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    ports:
+      - "8000:8000"
+    command: /start
+
+  postgres:
+    build:
+      context: .
+      dockerfile: ./compose/production/postgres/Dockerfile
+    image: sbooks_be_production_postgres
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+      - local_postgres_data_backups:/backups
+    env_file:
+      - ./.envs/.local/.postgres
+
+  redis:
+    image: redis:5.0
+
+  celeryworker:
+    <<: *django
+    image: sbooks_be_local_celeryworker
+    depends_on:
+      - redis
+      - postgres
+      
+    ports: []
+    command: /start-celeryworker
+
+  celerybeat:
+    <<: *django
+    image: sbooks_be_local_celerybeat
+    depends_on:
+      - redis
+      - postgres
+      
+    ports: []
+    command: /start-celerybeat
+
+  flower:
+    <<: *django
+    image: sbooks_be_local_flower
+    ports:
+      - "5555:5555"
+    command: /start-flower
+
+networks:
+  owncloud-network: # tạo network
+    driver: bridge

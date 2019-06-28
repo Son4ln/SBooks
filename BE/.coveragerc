@@ -1,5 +1,0 @@
-[run]
-include = sbooks/*
-omit = *migrations*, *tests*
-plugins =
-    django_coverage_plugin
