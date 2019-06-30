@@ -45,7 +45,7 @@ services:
 
   redis:
     image: redis:5.0
-
+  
   celeryworker:
     <<: *django
     image: sbooks_be_production_celeryworker

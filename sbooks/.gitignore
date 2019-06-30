@@ -278,5 +278,4 @@ sbooks_be/media/
 .envs/*
 !.envs/.local/
 
-owncloud/db/
-owncloud/files/
+owncloud

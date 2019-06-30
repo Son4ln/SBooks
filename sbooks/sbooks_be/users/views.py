@@ -2,8 +2,17 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse
 from django.views.generic import DetailView, RedirectView, UpdateView
+from django.http import HttpResponse
 import owncloud
+import requests
 User = get_user_model()
+
+
+def test_upload(request):
+    oc = owncloud.Client('http://owncloud', verify_certs=False)
+    # print(requests.get('http://owncloud'))
+    oc.login('admin', 'admin')
+    return HttpResponse("Hello, world. You're at the polls index.")
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
